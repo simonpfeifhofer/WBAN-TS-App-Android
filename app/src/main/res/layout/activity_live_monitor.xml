@@ -1,7 +1,43 @@
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/map"
-    tools:context="com.wban_ts.LiveMonitor"
-    android:name="com.google.android.gms.maps.SupportMapFragment"/>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:id="@+id/root_view"
+android:layout_width="fill_parent"
+android:layout_height="fill_parent"
+android:orientation="vertical" >
+
+    <LinearLayout
+        android:id = "@+id/Everything"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical" >
+
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/map"
+            tools:context="com.wban_ts.LiveMonitor"
+            android:name="com.google.android.gms.maps.SupportMapFragment">
+
+        </fragment>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/overlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="50dp">
+
+        <TextView
+            android:id="@+id/bpm_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="30dp"
+            android:textColor="@color/common_signin_btn_default_background"
+            android:textStyle="bold"
+            android:text="---"/>
+
+    </LinearLayout>
+
+</FrameLayout>

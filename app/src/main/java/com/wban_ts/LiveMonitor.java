@@ -3,15 +3,23 @@ package com.wban_ts;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.location.Location;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -28,6 +36,20 @@ public class LiveMonitor extends FragmentActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private BluetoothLeService mBluetoothLeService;
     private String mDeviceAddress;
+
+    private class DataUpdateReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(BluetoothLeService.ACTION_DATA_AVAILABLE)) {
+                ((TextView)findViewById(R.id.bpm_label)).setText(
+                        String.format(
+                                "%s bpm",
+                                intent.getStringExtra(BluetoothLeService.EXTRA_DATA)
+                        )
+                );
+            }
+        }
+    }
 
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -74,6 +96,10 @@ public class LiveMonitor extends FragmentActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_live_monitor);
         setUpMapIfNeeded();
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        registerReceiver(new DataUpdateReceiver(), filter);
 
         final BluetoothManager bluetoothManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
@@ -131,8 +157,27 @@ public class LiveMonitor extends FragmentActivity {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        centerMapOnMyLocation();
     }
+
+    private void centerMapOnMyLocation() {
+
+        mMap.setMyLocationEnabled(true);
+
+        Location location = mMap.getMyLocation();
+
+        if (location != null) {
+            LatLng latLong = new LatLng(location.getLatitude(), location.getLongitude());
+            mMap.animateCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                            latLong,
+                            16
+                    )
+            );
+        }
+
+    }
+
 }
 
 

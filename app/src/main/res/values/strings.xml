@@ -2,7 +2,7 @@
 <resources>
 
     <string name="app_name">WBAN-TS</string>
-    <string name="title_activity_live_monitor">Map</string>
+    <string name="title_activity_live_monitor">WBAN-TS</string>
     <string name="google_maps_key">AIzaSyCcywbrasD87p46iFERatnFFABUeAzZ1h8</string>
 
 </resources>
