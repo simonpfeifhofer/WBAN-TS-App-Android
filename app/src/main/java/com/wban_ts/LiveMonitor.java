@@ -37,16 +37,22 @@ public class LiveMonitor extends FragmentActivity {
     private BluetoothLeService mBluetoothLeService;
     private String mDeviceAddress;
 
+    private DataUpdateReceiver mReceiver = new DataUpdateReceiver();
+
     private class DataUpdateReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+
             if (intent.getAction().equals(BluetoothLeService.ACTION_DATA_AVAILABLE)) {
+
+                String value = intent.getStringExtra(BluetoothLeService.EXTRA_DATA);
                 ((TextView)findViewById(R.id.bpm_label)).setText(
                         String.format(
                                 "%s bpm",
-                                intent.getStringExtra(BluetoothLeService.EXTRA_DATA)
+                                value
                         )
                 );
+
             }
         }
     }
@@ -99,7 +105,8 @@ public class LiveMonitor extends FragmentActivity {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-        registerReceiver(new DataUpdateReceiver(), filter);
+        registerReceiver(mReceiver, filter);
+        Log.i(TAG, "Register DataUpdateReceiver registered");
 
         final BluetoothManager bluetoothManager = (BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
@@ -115,6 +122,16 @@ public class LiveMonitor extends FragmentActivity {
         mDeviceScan.ScanLeDevice(true);
 
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mReceiver);
+        Log.i(TAG, "Register DataUpdateReceiver unregistered");
+    }
+
+
+
 
     @Override
     protected void onResume() {

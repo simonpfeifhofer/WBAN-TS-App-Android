@@ -12,8 +12,10 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.util.List;
@@ -34,6 +36,8 @@ public class BluetoothLeService extends Service {
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
+    private SensorDataTransmitter mTransmitter;
+
     private int mConnectionState = STATE_DISCONNECTED;
 
     private static final int STATE_DISCONNECTED = 0;
@@ -154,6 +158,11 @@ public class BluetoothLeService extends Service {
             }
             final int heartRate = characteristic.getIntValue(format, 1);
             Log.d(TAG, String.format("Received heart rate: %d", heartRate));
+            if(mTransmitter == null){
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                mTransmitter = new SensorDataTransmitter(preferences);
+            }
+            mTransmitter.SendData(ProfileType.HRM, heartRate);
             intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
         }
         sendBroadcast(intent);
@@ -320,7 +329,6 @@ public class BluetoothLeService extends Service {
      */
     public List<BluetoothGattService> getSupportedGattServices() {
         if (mBluetoothGatt == null) return null;
-
         return mBluetoothGatt.getServices();
     }
 }
