@@ -10,10 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.location.Location;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -23,7 +20,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 public class LiveMonitor extends FragmentActivity {
 
@@ -65,7 +61,7 @@ public class LiveMonitor extends FragmentActivity {
     }
 
     // Code to manage Service lifecycle.
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
+    private final ServiceConnection mBluetoothServiceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
@@ -84,23 +80,41 @@ public class LiveMonitor extends FragmentActivity {
         }
     };
 
-    private boolean mServiceStarted = false;
+    private final ServiceConnection mLocationServiceConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            Log.e(TAG, "Location-Service connected");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            Log.e(TAG, "Location-Service disconnected");
+        }
+    };
+
+    private boolean mBluetoothServiceStarted = false;
 
     private BluetoothAdapter.LeScanCallback mLeScanCallback =
             new BluetoothAdapter.LeScanCallback() {
                 @Override
                 public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
                     mDeviceAddress = device.getAddress();
-                    if(device.getName().contains("HRM") && !mServiceStarted) {
-                        mServiceStarted = true;
-                        StartService();
+                    if(device.getName().contains("HRM") && !mBluetoothServiceStarted) {
+                        mBluetoothServiceStarted = true;
+                        StartBluetoothService();
                     }
                 }
             };
 
-    private void StartService(){
+    private void StartBluetoothService(){
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        bindService(gattServiceIntent, mBluetoothServiceConnection, BIND_AUTO_CREATE);
+    }
+
+    private void StartLocationService(){
+        Intent locationServiceIntent = new Intent(this, GPSService.class);
+        bindService(locationServiceIntent, mLocationServiceConnection, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -128,6 +142,8 @@ public class LiveMonitor extends FragmentActivity {
 
         mDeviceScan = new DeviceScan(mBluetoothAdapter, mLeScanCallback);
         mDeviceScan.ScanLeDevice(true);
+
+        //StartLocationService();
 
     }
 

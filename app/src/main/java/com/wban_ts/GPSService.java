@@ -49,10 +49,11 @@ public class GPSService extends Service
         @Override
         public void onLocationChanged(Location location)
         {
-            Log.e(TAG, "onLocationChanged: " + location);
-            mTransmitter.SendData(ProfileType.Location, location.toString());
+            String value = String.format("(%f/%f)", location.getLatitude(), location.getLongitude());
+            Log.e(TAG, "onLocationChanged: " + value);
+            mTransmitter.SendData(ProfileType.Location, value);
             Intent intent = new Intent(ACTION_DATA_AVAILABLE);
-            intent.putExtra(EXTRA_DATA, location.toString());
+            intent.putExtra(EXTRA_DATA, value);
             sendBroadcast(intent);
             mLastLocation.set(location);
         }
