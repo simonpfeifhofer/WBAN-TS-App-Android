@@ -19,6 +19,7 @@
         </activity>
 
         <service android:enabled="true" android:name=".BluetoothLeService" />
+        <service android:enabled="true" android:name=".GPSService" />
 
         <meta-data
             android:name="com.google.android.gms.version"

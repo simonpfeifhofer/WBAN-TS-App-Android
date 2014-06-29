@@ -54,6 +54,13 @@ public class LiveMonitor extends FragmentActivity {
                 );
 
             }
+
+            if (intent.getAction().equals(GPSService.ACTION_DATA_AVAILABLE)) {
+
+
+
+            }
+
         }
     }
 
@@ -105,6 +112,7 @@ public class LiveMonitor extends FragmentActivity {
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+        filter.addAction(GPSService.ACTION_DATA_AVAILABLE);
         registerReceiver(mReceiver, filter);
         Log.i(TAG, "Register DataUpdateReceiver registered");
 
