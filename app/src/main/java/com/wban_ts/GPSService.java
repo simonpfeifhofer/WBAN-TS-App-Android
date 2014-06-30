@@ -24,6 +24,9 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.model.LatLng;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class GPSService extends Service
 {
 
@@ -51,7 +54,15 @@ public class GPSService extends Service
         {
             String value = String.format("(%f/%f)", location.getLatitude(), location.getLongitude());
             Log.e(TAG, "onLocationChanged: " + value);
-            mTransmitter.SendData(ProfileType.Location, value);
+
+            try {
+                JSONObject jsonValue = new JSONObject().put("Latitude", location.getLatitude()).put("Longitude", location.getLongitude());
+                mTransmitter.SendData(ProfileType.Location, jsonValue);
+            }
+            catch(JSONException e){
+                Log.e(TAG, "Invalid JSON", e);
+            }
+
             Intent intent = new Intent(ACTION_DATA_AVAILABLE);
             intent.putExtra(EXTRA_DATA, value);
             sendBroadcast(intent);

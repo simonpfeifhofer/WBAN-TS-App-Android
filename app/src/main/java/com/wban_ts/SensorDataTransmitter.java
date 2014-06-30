@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by sip on 29.06.2014.
@@ -43,10 +45,8 @@ public class SensorDataTransmitter {
     }
 
     public void SendData(ProfileType type, Object value){
-
-        AsyncPost asyncPost = new AsyncPost(type, value);
+        AsyncPost asyncPost = new AsyncPost(mUrl, mUserId, type, value);
         new Thread(asyncPost).start();
-
     }
 
     private UUID EnsureUserId(SharedPreferences preferences){
@@ -63,69 +63,6 @@ public class SensorDataTransmitter {
             editor.commit();
         }
         return userId;
-
-    }
-
-    public class AsyncPost implements Runnable {
-
-        private ProfileType mType;
-        private Object mValue;
-
-        public AsyncPost(ProfileType type, Object value){
-            this.mType = type;
-            this.mValue = value;
-        }
-
-        private void PerformPost(String url, JSONObject obj) throws ClientProtocolException, IOException{
-
-            HttpParams myParams = new BasicHttpParams();
-            HttpConnectionParams.setConnectionTimeout(myParams, 10000);
-            HttpConnectionParams.setSoTimeout(myParams, 10000);
-            HttpClient httpclient = new DefaultHttpClient(myParams);
-            String json = obj.toString();
-
-            HttpPost httppost = new HttpPost(url.toString());
-            httppost.setHeader("Content-type", "application/json");
-
-            StringEntity se = new StringEntity(obj.toString());
-            se.setContentEncoding(new BasicHeader(HTTP.CONTENT_TYPE, "application/json"));
-            httppost.setEntity(se);
-
-            HttpResponse response = httpclient.execute(httppost);
-            String responseString = "Response: " + EntityUtils.toString(response.getEntity());
-            Log.i(TAG, responseString);
-
-        }
-
-        public void run(){
-
-            try {
-                JSONObject body = new JSONObject();
-                body.put("timestamp", new Date().getTime());
-                body.put("userId", mUserId);
-                body.put("profile", mType.toString());
-                body.put("value", mValue);
-
-                PerformPost(
-                        mUrl,
-                        body
-                );
-
-            }
-            catch(JSONException e){
-                Log.e(TAG,"JSON-Object cannot be build", e);
-            }
-            catch (ClientProtocolException e) {
-                Log.e(TAG, "Error occurred posting data", e);
-            }
-            catch (IOException e) {
-                Log.e(TAG, "Error occurred posting data", e);
-            }
-            catch (Exception e){
-                Log.e(TAG, "Generic exception", e);
-            }
-
-        }
 
     }
 

@@ -20,6 +20,8 @@ import android.util.Log;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Service for managing connection and data communication with a GATT server hosted on a
@@ -57,6 +59,8 @@ public class BluetoothLeService extends Service {
 
     public final static UUID UUID_HEART_RATE_MEASUREMENT =
             UUID.fromString(HEART_RATE_MEASUREMENT);
+
+    private Lock mLock = new ReentrantLock();
 
     public BluetoothLeService(){
         super();
@@ -141,31 +145,42 @@ public class BluetoothLeService extends Service {
 
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
-        final Intent intent = new Intent(action);
 
-        // This is special handling for the Heart Rate Measurement profile.  Data parsing is
-        // carried out as per profile specifications:
-        // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            int flag = characteristic.getProperties();
-            int format = -1;
-            if ((flag & 0x01) != 0) {
-                format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                Log.d(TAG, "Heart rate format UINT16.");
-            } else {
-                format = BluetoothGattCharacteristic.FORMAT_UINT8;
-                Log.d(TAG, "Heart rate format UINT8.");
-            }
-            final int heartRate = characteristic.getIntValue(format, 1);
-            Log.d(TAG, String.format("Received heart rate: %d", heartRate));
-            if(mTransmitter == null){
-                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-                mTransmitter = new SensorDataTransmitter(preferences);
-            }
-            mTransmitter.SendData(ProfileType.HRM, heartRate);
-            intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
+        if(!mLock.tryLock()){
+            return;
         }
-        sendBroadcast(intent);
+
+        try {
+
+            final Intent intent = new Intent(action);
+            // This is special handling for the Heart Rate Measurement profile.  Data parsing is
+            // carried out as per profile specifications:
+            // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
+            if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
+                int flag = characteristic.getProperties();
+                int format = -1;
+                if ((flag & 0x01) != 0) {
+                    format = BluetoothGattCharacteristic.FORMAT_UINT16;
+                    Log.d(TAG, "Heart rate format UINT16.");
+                } else {
+                    format = BluetoothGattCharacteristic.FORMAT_UINT8;
+                    Log.d(TAG, "Heart rate format UINT8.");
+                }
+                final int heartRate = characteristic.getIntValue(format, 1);
+                Log.d(TAG, String.format("Received heart rate: %d", heartRate));
+                if (mTransmitter == null) {
+                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+                    mTransmitter = new SensorDataTransmitter(preferences);
+                }
+                mTransmitter.SendData(ProfileType.HRM, heartRate);
+                intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));
+            }
+            sendBroadcast(intent);
+
+        }
+        finally {
+            mLock.unlock();
+        }
     }
 
     public class LocalBinder extends Binder {

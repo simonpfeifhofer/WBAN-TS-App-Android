@@ -143,7 +143,7 @@ public class LiveMonitor extends FragmentActivity {
         mDeviceScan = new DeviceScan(mBluetoothAdapter, mLeScanCallback);
         mDeviceScan.ScanLeDevice(true);
 
-        //StartLocationService();
+        StartLocationService();
 
     }
 
