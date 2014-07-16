@@ -34,35 +34,38 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SensorDataTransmitter {
 
     private final static String TAG = SensorDataTransmitter.class.getSimpleName();
-
-    private final static String mUserIdSettingsKey = "USER-ID";
     private final static String mUrl = "http://wbants.cloudapp.net/api/sensordata";
 
     private UUID mUserId;
+    private PreferencesHandler mPreferenceHandler;
 
-    public SensorDataTransmitter(SharedPreferences preferences){
-        mUserId = EnsureUserId(preferences);
+    public SensorDataTransmitter(PreferencesHandler preferenceHandler){
+        mPreferenceHandler = preferenceHandler;
+        EnsureUserId();
     }
 
     public void SendData(ProfileType type, Object value){
-        AsyncPost asyncPost = new AsyncPost(mUrl, mUserId, type, value);
+        String activityId = mPreferenceHandler.GetActivityId();
+        if(activityId == ""){
+            Log.i(TAG, "Data transmission suppressed. No activity running.");
+            return;
+        }
+        AsyncPost asyncPost = new AsyncPost(mUrl, mUserId, activityId, type, value);
         new Thread(asyncPost).start();
     }
 
-    private UUID EnsureUserId(SharedPreferences preferences){
+    private void EnsureUserId(){
 
-        String userIdString = preferences.getString(mUserIdSettingsKey, "");
+        String userIdString = mPreferenceHandler.GetUserId();
         UUID userId;
         if(userIdString != ""){
            userId = UUID.fromString(userIdString);
         }
         else{
             userId = UUID.randomUUID();
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putString(mUserIdSettingsKey, userId.toString());
-            editor.commit();
+            mPreferenceHandler.SetUserId(userId.toString());
         }
-        return userId;
+        mUserId = userId;
 
     }
 

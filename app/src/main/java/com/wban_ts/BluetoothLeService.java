@@ -169,8 +169,8 @@ public class BluetoothLeService extends Service {
                 final int heartRate = characteristic.getIntValue(format, 1);
                 Log.d(TAG, String.format("Received heart rate: %d", heartRate));
                 if (mTransmitter == null) {
-                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-                    mTransmitter = new SensorDataTransmitter(preferences);
+                    PreferencesHandler ph = new PreferencesHandler(PreferenceManager.getDefaultSharedPreferences(this));
+                    mTransmitter = new SensorDataTransmitter(ph);
                 }
                 mTransmitter.SendData(ProfileType.HRM, heartRate);
                 intent.putExtra(EXTRA_DATA, String.valueOf(heartRate));

@@ -9,17 +9,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.IBinder;
+import android.preference.Preference;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.UUID;
 
 public class LiveMonitor extends FragmentActivity {
 
@@ -34,6 +42,8 @@ public class LiveMonitor extends FragmentActivity {
     private String mDeviceAddress;
 
     private DataUpdateReceiver mReceiver = new DataUpdateReceiver();
+
+    private PreferencesHandler mPreferenceHandler;
 
     private class DataUpdateReceiver extends BroadcastReceiver {
         @Override
@@ -53,7 +63,19 @@ public class LiveMonitor extends FragmentActivity {
 
             if (intent.getAction().equals(GPSService.ACTION_DATA_AVAILABLE)) {
 
-
+                String value = intent.getStringExtra(GPSService.EXTRA_DATA);
+                LatLng latLong = new LatLng(Double.parseDouble(value.split("/")[0]), Double.parseDouble(value.split("/")[1]));
+                mMap.clear();
+                mMap.addMarker(
+                        new MarkerOptions()
+                                .position(latLong)
+                );
+                mMap.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                                latLong,
+                                16
+                        )
+                );
 
             }
 
@@ -124,6 +146,9 @@ public class LiveMonitor extends FragmentActivity {
         setContentView(R.layout.activity_live_monitor);
         setUpMapIfNeeded();
 
+        mPreferenceHandler = new PreferencesHandler(PreferenceManager.getDefaultSharedPreferences(this));
+        performActivityVisibilitySettings();
+
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
         filter.addAction(GPSService.ACTION_DATA_AVAILABLE);
@@ -153,9 +178,6 @@ public class LiveMonitor extends FragmentActivity {
         unregisterReceiver(mReceiver);
         Log.i(TAG, "Register DataUpdateReceiver unregistered");
     }
-
-
-
 
     @Override
     protected void onResume() {
@@ -198,12 +220,12 @@ public class LiveMonitor extends FragmentActivity {
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        centerMapOnMyLocation();
+        //centerMapOnMyLocation();
     }
 
     private void centerMapOnMyLocation() {
 
-        mMap.setMyLocationEnabled(true);
+        //mMap.setMyLocationEnabled(true);
 
         Location location = mMap.getMyLocation();
 
@@ -216,6 +238,36 @@ public class LiveMonitor extends FragmentActivity {
                     )
             );
         }
+
+    }
+
+    private void performActivityVisibilitySettings(){
+
+        Button startBtn = (Button) findViewById(R.id.start_activity_button);
+        Button stopBtn = (Button) findViewById(R.id.stop_activity_button);
+
+        if(mPreferenceHandler.GetActivityId() == ""){
+            stopBtn.setVisibility(View.GONE);
+            startBtn.setVisibility(View.VISIBLE);
+        }
+        else{
+            startBtn.setVisibility(View.GONE);
+            stopBtn.setVisibility(View.VISIBLE);
+        }
+
+    }
+
+    public void startActivity(View view) {
+
+        mPreferenceHandler.SetActivityId(UUID.randomUUID().toString());
+        performActivityVisibilitySettings();
+
+    }
+
+    public void stopActivity(View view) {
+
+        mPreferenceHandler.SetActivityId("");
+        performActivityVisibilitySettings();
 
     }
 

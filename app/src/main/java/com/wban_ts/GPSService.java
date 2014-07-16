@@ -52,11 +52,11 @@ public class GPSService extends Service
         @Override
         public void onLocationChanged(Location location)
         {
-            String value = String.format("(%f/%f)", location.getLatitude(), location.getLongitude());
+            String value = String.format("%f/%f", location.getLatitude(), location.getLongitude());
             Log.e(TAG, "onLocationChanged: " + value);
 
             try {
-                JSONObject jsonValue = new JSONObject().put("Latitude", location.getLatitude()).put("Longitude", location.getLongitude());
+                JSONObject jsonValue = new JSONObject().put("latitude", location.getLatitude()).put("longitude", location.getLongitude());
                 mTransmitter.SendData(ProfileType.Location, jsonValue);
             }
             catch(JSONException e){
@@ -151,8 +151,8 @@ public class GPSService extends Service
         }
         Log.e(TAG, "initialize SensorDataTransmitter");
         if(mTransmitter == null){
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            mTransmitter = new SensorDataTransmitter(preferences);
+            PreferencesHandler ph = new PreferencesHandler(PreferenceManager.getDefaultSharedPreferences(this));
+            mTransmitter = new SensorDataTransmitter(ph);
         }
     }
 }

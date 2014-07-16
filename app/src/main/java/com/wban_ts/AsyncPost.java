@@ -34,6 +34,7 @@ public class AsyncPost implements Runnable {
 
     private String mUrl;
     private UUID mUserId;
+    private String mActivityId;
     private ProfileType mType;
     private Object mValue;
 
@@ -44,9 +45,10 @@ public class AsyncPost implements Runnable {
         mPostLocks.put(ProfileType.Location, new ReentrantLock());
     }
 
-    public AsyncPost(String url, UUID userId, ProfileType type, Object value){
+    public AsyncPost(String url, UUID userId, String activityId, ProfileType type, Object value){
         this.mUrl = url;
         this.mUserId = userId;
+        this.mActivityId = activityId;
         this.mType = type;
         this.mValue = value;
     }
@@ -93,6 +95,7 @@ public class AsyncPost implements Runnable {
             JSONObject body = new JSONObject();
             body.put("timestamp", new Date().getTime());
             body.put("userId", mUserId);
+            body.put("activityId", mActivityId);
             body.put("profile", mType.toString());
             body.put("value", mValue);
 
